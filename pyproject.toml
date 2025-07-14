@@ -1,0 +1,17 @@
+[project]
+name = "yelp-ai"
+version = "0.1.0"
+description = "An example MCP server exposing tools to interact with Yelp"
+
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.9.1",
+]
+
+[project.scripts]
+mcp-yelp-agent = "yelp_agent.main:main"
+
+[tool.uv]
+package = true
