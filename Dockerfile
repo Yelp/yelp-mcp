@@ -3,8 +3,8 @@
 FROM python:3.12-slim-bookworm
 
 # Install uv using the official distroless image.
-# Pinning to a specific version (e.g., :0.6.11) is recommended for reproducibility.
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Pinning to a specific version (e.g., :0.7.20) is recommended for reproducibility.
+COPY --from=ghcr.io/astral-sh/uv:0.7.20 /uv /uvx /bin/
 
 # Set the working directory in the container
 WORKDIR /app

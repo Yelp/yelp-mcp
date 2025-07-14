@@ -95,8 +95,8 @@ def format_fusion_ai_response(response: dict) -> str:
 
             # URL
             url = business.get("url", "")
-
-            formatted_output += f"- **URL**: [View on Yelp]({url})\n"
+            if url:
+                formatted_output += f"- **URL**: [View on Yelp]({url})\n"
 
             # Phone
             phone = business.get("phone", "")

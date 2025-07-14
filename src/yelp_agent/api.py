@@ -18,8 +18,16 @@ async def make_fusion_ai_request(
     chat_id: Optional[str] = None,
     user_context: Optional[UserContext] = None,
 ):
+    yelp_api_key = os.getenv("YELP_API_KEY")
+
+    if not yelp_api_key:
+        logger.warning(
+            "YELP_API_KEY is missing from the environment. Unable to make authorized requests."
+        )
+        return None
+
     headers = {
-        "Authorization": f"Bearer {os.getenv('YELP_API_KEY')}",
+        "Authorization": f"Bearer {yelp_api_key}",
         "Content-Type": "application/json",
     }
 
@@ -41,6 +49,11 @@ async def make_fusion_ai_request(
             )
             response.raise_for_status()
             return response.json()
-        except Exception as e:
-            logger.error(f"Error making Fusion AI request: {e}")
+        except httpx.RequestError as e:
+            logger.error(f"Request error while making Fusion AI request: {e}")
             return None
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP status error while making Fusion AI request: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error while making Fusion AI request: {e}")

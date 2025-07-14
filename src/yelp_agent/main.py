@@ -64,7 +64,7 @@ async def yelp_agent(
                 latitude=search_latitude,
                 longitude=search_longitude,
             )
-            if search_latitude and search_longitude
+            if search_latitude is not None and search_longitude is not None
             else None
         ),
         chat_id=chat_id,

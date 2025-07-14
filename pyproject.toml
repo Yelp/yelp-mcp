@@ -1,5 +1,5 @@
 [project]
-name = "yelp-ai"
+name = "yelp-mcp"
 version = "0.1.0"
 description = "An example MCP server exposing tools to interact with Yelp"
 
