@@ -3,6 +3,7 @@ Main entry point for the Fusion AI MCP server.
 Provides the Yelp business agent tool for conversational business queries
 and recommendations.
 """
+import argparse
 from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
@@ -81,9 +82,40 @@ def main():
     Main function to start the Fusion AI MCP server.
     Initializes the MCP server and registers the Yelp interaction tool.
     """
-    logger.info("Starting Fusion AI MCP server")
-    # Initialize the MCP server
-    mcp.run(transport="stdio")
+    parser = argparse.ArgumentParser(description="Yelp MCP Server")
+    parser.add_argument(
+        "--transport",
+        type=str,
+        choices=["stdio", "streamable-http", "sse"],
+        default="stdio",
+        help="The transport type to use for the MCP server.",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="127.0.0.1",
+        help="The host to bind to for http/sse transports.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="The port to bind to for http/sse transports.",
+    )
+    args = parser.parse_args()
+
+    logger.info(f"Starting Yelp MCP server with {args.transport} transport")
+
+    if args.transport == "streamable-http":
+        mcp.settings.host = args.host
+        mcp.settings.port = args.port
+        mcp.run(transport="streamable-http")
+    elif args.transport == "sse":
+        mcp.settings.host = args.host
+        mcp.settings.port = args.port
+        mcp.run(transport="sse")
+    else:
+        mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

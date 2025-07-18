@@ -64,9 +64,22 @@ This repository is designed to be run as a [Model Context Protocol server](https
 
 Ensure you have completed the "Setup and Installation" steps, especially installing the project so the mcp-yelp-agent script is available.
 
-Configure your MCP client with the following JSON settings:
+#### **Server Configuration**
 
-```
+The server supports multiple transport protocols and can be configured with command-line arguments. While `stdio` is the primary transport for most MCP clients, other options are available for different use cases.
+
+*   `--transport`: Choose the communication protocol.
+    *   `stdio` (default): Standard input/output, ideal for local tools.
+    *   `streamable-http`: Streamable HTTP.
+    *   `sse`: Server-Sent Events.
+*   `--host`: The host address to bind to (e.g., `127.0.0.1` or `0.0.0.0`). Default is `127.0.0.1`.
+*   `--port`: The port to listen on. Default is `8000`.
+
+### **Method 1: Running without Docker**
+
+Configure your MCP client with the following JSON settings to run the server with the default `stdio` transport.
+
+```json
 {
   "mcpServers": {
     "yelp_agent": {
@@ -87,9 +100,9 @@ Configure your MCP client with the following JSON settings:
 
 Notes:
 
-* Replace \<PATH\_TO\_YOUR\_CLONED\_PROJECT\_DIRECTORY\> with the absolute path to where you cloned this project.
-* Replace \<YOUR\_YELP\_FUSION\_API\_KEY\> with your actual Yelp Fusion API key.
-* If your MCP client has trouble invoking uv directly, you might need to provide the full path to the uv binary. You can find this by running `which uv` in your terminal.
+*   Replace `<PATH_TO_YOUR_CLONED_PROJECT_DIRECTORY>` with the absolute path to where you cloned this project.
+*   Replace `<YOUR_YELP_FUSION_API_KEY>` with your actual Yelp Fusion API key.
+*   If your MCP client has trouble invoking uv directly, you might need to provide the full path to the uv binary. You can find this by running `which uv` in your terminal.
 
 ### **Method 2: Running with Docker**
 
@@ -97,7 +110,7 @@ Ensure you have built the Docker image as described in "Building the Docker Imag
 
 Configure your MCP client with the following JSON settings:
 
-```
+```json
 {
   "mcpServers": {
     "yelp_agent": {
@@ -117,5 +130,5 @@ Configure your MCP client with the following JSON settings:
 
 Notes:
 
-* Replace \<YOUR\_YELP\_FUSION\_API\_KEY\> with your actual Yelp Fusion API key.
-* If your MCP client has trouble invoking docker from the system PATH, you might need to provide the full path to its binary (e.g., run which docker).
+*   Replace `<YOUR_YELP_FUSION_API_KEY>` with your actual Yelp Fusion API key.
+*   If your MCP client has trouble invoking docker from the system PATH, you might need to provide the full path to its binary (e.g., run which docker).
