@@ -2,6 +2,10 @@
 
 [Yelp Fusion AI](https://business.yelp.com/data/products/fusion-ai/) brings conversational intelligence to your applications, enabling users to ask natural language questions and receive real-time, contextually relevant answers powered by Yelp’s latest business data and reviews.
 
+<a href="https://glama.ai/mcp/servers/@Yelp/yelp-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@Yelp/yelp-mcp/badge" alt="Yelp Fusion AI Server MCP server" />
+</a>
+
 ### Fusion AI Capabilities
 
 * **Next generation search & discovery** – Search with natural language, discover, and connect with contextually relevant businesses. *("Find the best tacos in the Bay Area")*
