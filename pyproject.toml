@@ -15,3 +15,4 @@ mcp-yelp-agent = "yelp_agent.main:main"
 
 [tool.uv]
 package = true
+constraint-dependencies = ["certifi>=2026.10.23"]
