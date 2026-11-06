@@ -4,9 +4,11 @@ Provides the Yelp business agent tool for conversational business queries
 and recommendations.
 """
 import argparse
+import os
 from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from .api import make_fusion_ai_request
 from .api import UserContext
@@ -77,6 +79,46 @@ async def yelp_agent(
     return format_fusion_ai_response(response)
 
 
+LOCALHOST_ALLOWED_HOSTS = ["127.0.0.1:*", "localhost:*", "[::1]:*"]
+LOCALHOST_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:*",
+    "http://localhost:*",
+    "http://[::1]:*",
+]
+LOOPBACK_BIND_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+def _split_env_list(name: str) -> list[str]:
+    return [item.strip() for item in os.getenv(name, "").split(",") if item.strip()]
+
+
+def build_transport_security(
+    host: str,
+    allowed_hosts: list[str],
+    allowed_origins: list[str],
+) -> TransportSecuritySettings:
+    """
+    Build DNS rebinding protection settings for the HTTP transports.
+
+    Protection is always enabled. Localhost is always allowed so the server can
+    be reached through a local port mapping; any other Host or Origin header
+    value has to be allowed explicitly.
+    """
+    if host not in LOOPBACK_BIND_HOSTS and not (allowed_hosts or allowed_origins):
+        logger.warning(
+            "Binding to %s but only localhost Host/Origin headers are allowed. "
+            "Requests using any other hostname will be rejected; pass "
+            "--allowed-host/--allowed-origin (or set MCP_ALLOWED_HOSTS/"
+            "MCP_ALLOWED_ORIGINS) to allow them.",
+            host,
+        )
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=LOCALHOST_ALLOWED_HOSTS + allowed_hosts,
+        allowed_origins=LOCALHOST_ALLOWED_ORIGINS + allowed_origins,
+    )
+
+
 def main():
     """
     Main function to start the Fusion AI MCP server.
@@ -102,18 +144,45 @@ def main():
         default=8000,
         help="The port to bind to for http/sse transports.",
     )
+    parser.add_argument(
+        "--allowed-host",
+        action="append",
+        default=_split_env_list("MCP_ALLOWED_HOSTS"),
+        metavar="HOST[:PORT|:*]",
+        help=(
+            "Additional Host header value to accept on http/sse transports, e.g. "
+            "'mcp.example.com' or 'mcp.example.com:*' (any port). Repeatable. "
+            "Defaults to MCP_ALLOWED_HOSTS (comma-separated). Localhost is always "
+            "allowed."
+        ),
+    )
+    parser.add_argument(
+        "--allowed-origin",
+        action="append",
+        default=_split_env_list("MCP_ALLOWED_ORIGINS"),
+        metavar="ORIGIN",
+        help=(
+            "Additional Origin header value to accept on http/sse transports, e.g. "
+            "'https://app.example.com'. Repeatable. Defaults to "
+            "MCP_ALLOWED_ORIGINS (comma-separated). Localhost is always allowed."
+        ),
+    )
     args = parser.parse_args()
 
     logger.info(f"Starting Yelp MCP server with {args.transport} transport")
 
-    if args.transport == "streamable-http":
+    if args.transport in ("streamable-http", "sse"):
+        if args.transport == "sse":
+            logger.warning(
+                "The SSE transport is deprecated in the MCP specification; "
+                "prefer --transport streamable-http."
+            )
         mcp.settings.host = args.host
         mcp.settings.port = args.port
-        mcp.run(transport="streamable-http")
-    elif args.transport == "sse":
-        mcp.settings.host = args.host
-        mcp.settings.port = args.port
-        mcp.run(transport="sse")
+        mcp.settings.transport_security = build_transport_security(
+            args.host, args.allowed_host, args.allowed_origin
+        )
+        mcp.run(transport=args.transport)
     else:
         mcp.run(transport="stdio")
 

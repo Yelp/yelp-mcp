@@ -1,10 +1,14 @@
 # Dockerfile
 # Use an official Python runtime as a parent image
-FROM python:3.12-slim-bookworm
+FROM python:3.13-slim-trixie
 
 # Install uv using the official distroless image.
-# Pinning to a specific version (e.g., :0.7.20) is recommended for reproducibility.
-COPY --from=ghcr.io/astral-sh/uv:0.7.20 /uv /uvx /bin/
+# Pinned to a specific version for reproducible builds.
+COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /uvx /bin/
+
+# Use the image's Python interpreter rather than letting uv download one.
+ENV UV_PYTHON_DOWNLOADS=never \
+    UV_LINK_MODE=copy
 
 # Set the working directory in the container
 WORKDIR /app
@@ -35,5 +39,6 @@ COPY src/yelp_agent ./src/yelp_agent
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
 
-# Define the command to run the application using 'uv run'
-CMD ["uv", "run", "mcp-yelp-agent"]
+# Run the server. --no-sync uses the environment built above instead of
+# re-syncing (and rebuilding the project) on every container start.
+CMD ["uv", "run", "--frozen", "--no-sync", "mcp-yelp-agent"]
