@@ -24,7 +24,7 @@ This server exposes one primary tool:
 
 You either need a container manager (like [Docker](https://docker.com) or [Podman](https://podman.io)) or the following installed locally:
 
-* **Python:** Version 3.10 or higher (as specified in pyproject.toml).
+* **Python:** Version 3.10 or higher (as specified in pyproject.toml). The repository's `.python-version` and the Docker image use Python 3.13.
 * **uv**: The Python package manager. You can find installation instructions at [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/).
 
 You will also need an API key for Yelp Fusion AI. You can get a key by [creating an app here](https://www.yelp.com/developers/v3/manage_app?utm_source=GitHub&utm_medium=Readme), which will start your free trial. If you need more time to evaluate, email us at [fusion@yelp.com](mailto:fusion@yelp.com) to extend your trial.
@@ -36,7 +36,7 @@ Find more details and [comprehensive documentation about Yelp Fusion AI here.](h
 1. Clone the repository:
 
 ```
-git clone <repository_url>
+git clone https://github.com/Yelp/yelp-mcp.git
 cd yelp-mcp
 ```
 
@@ -74,8 +74,25 @@ The server supports multiple transport protocols and can be configured with comm
     *   `sse`: Server-Sent Events.
 *   `--host`: The host address to bind to (e.g., `127.0.0.1` or `0.0.0.0`). Default is `127.0.0.1`.
 *   `--port`: The port to listen on. Default is `8000`.
+*   `--allowed-host`: An extra `Host` header value to accept on the HTTP transports (repeatable). Use `name:*` to allow any port. Can also be set with `MCP_ALLOWED_HOSTS` (comma-separated).
+*   `--allowed-origin`: An extra `Origin` header value to accept on the HTTP transports (repeatable), e.g. `https://app.example.com`. Can also be set with `MCP_ALLOWED_ORIGINS` (comma-separated).
 
-### **Method 1: Running without Docker**
+The SSE transport is deprecated in the MCP specification. Prefer `streamable-http` for new HTTP deployments.
+
+#### **HTTP transport security (DNS rebinding protection)**
+
+The `streamable-http` and `sse` transports always validate the `Host` and `Origin` headers of incoming requests, to protect against [DNS rebinding attacks](https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices). By default only `localhost`, `127.0.0.1` and `[::1]` (on any port) are accepted. Requests with any other `Host` are rejected with `421`, and requests with any other `Origin` with `403`.
+
+That default is enough when clients connect through `localhost`, including through a Docker port mapping such as `-p 127.0.0.1:8000:8000`. If clients reach the server by another hostname or IP address (for example behind a reverse proxy, or on another machine), allow that name explicitly:
+
+```
+uv run mcp-yelp-agent --transport streamable-http --host 0.0.0.0 \
+  --allowed-host 'mcp.example.com:*' --allowed-origin 'https://mcp.example.com'
+```
+
+The server does not authenticate clients. Don't expose an HTTP transport to untrusted networks: anyone who can reach it can make requests with your `YELP_API_KEY`.
+
+#### **Client configuration**
 
 Configure your MCP client with the following JSON settings to run the server with the default `stdio` transport.
 
@@ -132,3 +149,14 @@ Notes:
 
 *   Replace `<YOUR_YELP_FUSION_API_KEY>` with your actual Yelp Fusion API key.
 *   If your MCP client has trouble invoking docker from the system PATH, you might need to provide the full path to its binary (e.g., run which docker).
+
+To run the container with the Streamable HTTP transport instead, bind to `0.0.0.0` inside the container and publish the port on localhost only:
+
+```
+docker run --rm --init -p 127.0.0.1:8000:8000 \
+  -e YELP_API_KEY=<YOUR_YELP_FUSION_API_KEY> \
+  mcp-yelp-agent:latest \
+  uv run --frozen --no-sync mcp-yelp-agent --transport streamable-http --host 0.0.0.0 --port 8000
+```
+
+The server is then available at `http://localhost:8000/mcp`. If clients reach the container by a hostname other than `localhost`, add `--allowed-host` (and `--allowed-origin` if needed) as described in [HTTP transport security](#http-transport-security-dns-rebinding-protection).
