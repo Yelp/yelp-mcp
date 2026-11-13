@@ -1,6 +1,6 @@
 # Dockerfile
 # Use an official Python runtime as a parent image
-FROM python:3.13-slim-trixie
+FROM python:3.15-slim-trixie
 
 # Install uv using the official distroless image.
 # Pinned to a specific version for reproducible builds.
